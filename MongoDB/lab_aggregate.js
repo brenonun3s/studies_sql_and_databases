@@ -81,3 +81,62 @@ db.vendas.aggregate([
         }
     }
 ])
+
+db.vendas.aggregate([
+    { $sort: { valor_total: -1 } },
+    {
+        $group: {
+            _id: "$vendedor",
+            maior_venda: { $first: "$valor_total" },
+            produto: { $first: "$produto" }
+        }
+    }
+])
+
+db.vendas.aggregate([
+    {
+        $group: {
+            _id: "$regiao",
+            media_valor: { $avg: "$valor_total" }
+        }
+    },
+    {
+        $project: {
+            regiao: "$_id",
+            media_valor: { $round: ["$media_valor", 2] },
+            _id
+                :
+                0
+        }
+    }
+]
+)
+
+db.vendas.aggregate([
+    // Agrupar por produto
+    {
+        $group: {
+            _id: "$produto",
+            quantidade_total: { $sum: "$quantidade" },
+            faturamento_total: { $sum: "$valor_total" }
+        }
+    },
+    // Ordenar por quantidade
+    {
+        $sort: { quantidade_total: -1 }
+    },
+    // Limitar a 3
+    {
+        $limit: 3
+
+    },
+    // Formatar saída
+    {
+        $project: {
+            produto: "$_id",
+            quantidade_total: 1,
+            faturamento_total: { $round: ["$faturamento_total", 2] },
+            _id: 0
+        }
+    }
+])
